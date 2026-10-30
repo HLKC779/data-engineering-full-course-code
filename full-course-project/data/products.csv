@@ -1,0 +1,19 @@
+product_id,name,category,unit_price
+1,House Blend 250g,coffee,8.50
+2,Dark Roast 250g,coffee,9.00
+3,Decaf 250g,coffee,9.50
+4,Single Origin Ethiopia 250g,coffee,12.00
+5,Espresso Beans 1kg,coffee,29.00
+6,Green Tea 100g,tea,6.50
+7,Earl Grey 100g,tea,6.00
+8,Chai Spice 100g,tea,7.00
+9,Mint Tea 50g,tea,4.50
+10,Ceramic Mug,gear,14.00
+11,Pour Over Dripper,gear,22.00
+12,Paper Filters x100,gear,5.00
+13,Hand Grinder,gear,45.00
+14,Milk Frother,gear,18.00
+15,Gift Card 25,gift,25.00
+16,Oat Cookies,snacks,3.50
+17,Dark Chocolate Bar,snacks,2.80
+18,Almond Biscotti,snacks,4.20

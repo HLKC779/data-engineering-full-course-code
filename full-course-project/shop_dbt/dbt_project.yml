@@ -1,0 +1,10 @@
+name: shop
+version: "1.0.0"
+profile: shop
+
+models:
+  shop:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

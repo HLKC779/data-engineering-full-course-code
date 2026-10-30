@@ -1,0 +1,11 @@
+pandas==3.0.6
+polars[rtcompat]==2.0.0
+duckdb==1.5.6
+pyarrow==26.0.0
+psycopg[binary]==3.3.6
+pyspark==4.2.0
+dbt-core==1.12.5
+dbt-duckdb==1.11.0
+confluent-kafka==2.16.0
+pytest==9.1.1
+requests==2.34.2

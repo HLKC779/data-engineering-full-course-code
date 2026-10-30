@@ -1,0 +1,95 @@
+Data Engineering Full Course for Beginners - course code
+=========================================================
+Everything runs on your own computer. Linux or macOS work directly; on Windows use WSL (Ubuntu),
+because Apache Airflow does not support Windows natively.
+
+Tested with: Python 3.13.5, uv 0.13.0, Java 21 (OpenJDK), PostgreSQL 17, sqlite3 3.46,
+pandas 3.0.6, polars 2.0.0, duckdb 1.5.6, pyarrow 26.0.0, psycopg 3.3.6, pyspark 4.2.0,
+dbt-core 1.12.5 + dbt-duckdb 1.11.0, confluent-kafka 2.16.0, pytest 9.1.1, requests 2.34.2,
+Apache Airflow 3.3.2 (own venv), Apache Kafka 4.3.1 (KRaft mode).
+
+DATA
+- data/*.csv and data/batches/*.csv: the "Bean & Leaf" shop dataset. It is SYNTHETIC (generated for this course),
+  with deliberate problems (duplicates, missing amounts, an orphan order) to practise on.
+- NYC taxi data is NOT included. It is published by the NYC Taxi & Limousine Commission (TLC) under the
+  NYC Open Data terms; TLC makes no representation about its accuracy. Download it with:
+      python taxi/download.py 2024-01 2024-02
+  (fetches yellow_tripdata_2024-01/02.parquet and taxi_zone_lookup.csv (copy it to taxi/taxi_dbt/seeds/taxi_zones.csv, see step 9) into data/nyc from
+   https://d37ci6vzurychx.cloudfront.net ; skips files you already have)
+
+1) Setup (chapter 2), in this folder:
+     uv venv .venv-data-engineering --python 3.13
+     source .venv-data-engineering/bin/activate
+     uv pip install -r requirements.txt
+     python check_setup.py
+   (If using a different Python environment, use Python 3.13 and update the .venv-data-engineering paths below.)
+
+2) Python and SQLite (chapters 3-9, 11, 13):
+     python orders_report.py ; python customers.py ; python read_json.py
+     sqlite3 -box shop.db < sql/load_shop.sql      (then sql/basics.sql, joins.sql, aggregations.sql,
+                                                   windows.sql, ctes.sql, dedupe.sql, calendar.sql, flat.sql)
+     python etl_pandas.py
+
+3) PostgreSQL (chapters 10, 12, 17) - a private cluster in this folder, port 5433:
+     initdb -D pgdata -U postgres --auth=trust
+     (add to pgdata/postgresql.conf:  port = 5433  and  unix_socket_directories = '/tmp')
+     pg_ctl -D pgdata -l pg.log start
+     cp pg.env.example pg.env
+     source pg.env ; createdb shop
+     psql -q -f sql/pg_schema.sql ; psql -q -f sql/pg_load.sql ; psql -q -f sql/pg_queries.sql
+     psql -q -f sql/star.sql ; psql -q -f sql/star_queries.sql
+     for f in data/batches/*.csv; do python incremental.py $f; done
+     pg_ctl -D pgdata stop
+   Note: pg_load.sql and pg_queries.sql are the FIXED versions from the end of chapter 10.
+
+4) Files, polars, DuckDB, quality (chapters 14-16) - needs data/nyc (see DATA):
+     python formats.py ; python parquet_inside.py ; python race.py ; python duck_shop.py
+     python quality.py      (exits with code 1 ON PURPOSE: the raw shop data has known problems)
+     python -m pytest -q tests
+
+5) dbt (chapter 19):  cd shop_dbt && dbt build      (1 warning by design: order 1777 has an unknown customer)
+
+6) Spark and partitions (chapters 20, 22):  export JAVA_HOME="$HOME/.local/share/data-engineering-course/jdk21/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+export SPARK_HOME="$PWD/.venv-data-engineering/lib/python3.13/site-packages/pyspark"
+python spark_taxi.py ; python warehouse.py
+
+7) Kafka (chapter 21): Kafka 4.3.1 is installed under
+   $HOME/.local/share/data-engineering-course/kafka_2.13-4.3.1. If installed elsewhere,
+   download kafka_2.13-4.3.1.tgz from https://downloads.apache.org/kafka/4.3.1/ and set KAFKA_HOME to that directory.
+     export JAVA_HOME="$HOME/.local/share/data-engineering-course/jdk21/Contents/Home"
+     export PATH="$JAVA_HOME/bin:$PATH"
+     export KAFKA_HOME="$HOME/.local/share/data-engineering-course/kafka_2.13-4.3.1"
+     echo "log.dirs=$PWD/kafka-data" >> "$KAFKA_HOME/config/server.properties"
+     export PATH="$KAFKA_HOME/bin:$PATH"
+     kafka-storage.sh format --standalone -t "$(kafka-storage.sh random-uuid)" -c "$KAFKA_HOME/config/server.properties"
+     kafka-server-start.sh "$KAFKA_HOME/config/server.properties"          (terminal 2)
+     kafka-topics.sh --bootstrap-server localhost:9092 --create --topic orders --partitions 3
+     python producer.py 0 10 ; python consumer.py
+
+8) Airflow (chapters 18, 25):
+     uv venv .venv-airflow --python 3.13
+     cp airflow.env.example airflow.env
+     source airflow.env                         (activates .venv-airflow, sets AIRFLOW_HOME=./airflow)
+   (On Intel macOS, install Rust and user-local OpenSSL first; Airflow's pinned cryptography package may build from source.)
+     export PATH="$HOME/.cargo/bin:$PATH"
+     export OPENSSL_DIR="$HOME/.local/share/data-engineering-course/openssl"
+     export OPENSSL_NO_PKG_CONFIG=1 OPENSSL_STATIC=1
+     uv pip install "apache-airflow==3.3.2" --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt
+     airflow db migrate
+     airflow dags test shop_pipeline
+     airflow dags test taxi_pipeline            (needs step 1 done: it uses .venv-data-engineering/bin/python and .venv-data-engineering/bin/dbt)
+     then, each in its own terminal (after source airflow.env):
+       airflow api-server --workers 1   (web UI on http://localhost:8080)
+       airflow dag-processor
+       airflow scheduler
+     (airflow standalone starts all three, but with 3.3.2 it did not shut down cleanly on Ctrl+C in our tests)
+
+9) Final project (chapters 23-25):
+     python taxi/download.py 2024-01 2024-02
+     python taxi/ingest.py 2024-01 2024-02
+     mkdir -p taxi/taxi_dbt/seeds && cp data/nyc/taxi_zone_lookup.csv taxi/taxi_dbt/seeds/taxi_zones.csv   (TLC zone table = dbt seed; not shipped)
+     cd taxi/taxi_dbt && dbt build && cd ../..
+     python taxi/report.py
+
+MANIFEST.sha256 lists a SHA-256 for every file here. This is learning code, not production code.

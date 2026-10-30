@@ -1,0 +1,11 @@
+order_id,customer_id,order_date,status,amount
+3001,5,2026-01-05,completed,14.00
+3002,130,2026-01-05,completed,29.00
+3003,74,2026-01-05,completed,8.50
+3004,68,2026-01-05,completed,8.50
+3005,95,2026-01-05,completed,29.00
+3006,80,2026-01-05,completed,14.00
+3007,178,2026-01-05,completed,17.00
+3008,1,2026-01-05,completed,14.00
+3009,34,2026-01-05,completed,17.00
+3010,6,2026-01-05,completed,12.00

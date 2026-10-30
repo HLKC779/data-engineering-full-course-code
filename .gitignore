@@ -1,0 +1,6 @@
+.venv*/
+__pycache__/
+*.py[cod]
+spark-warehouse/
+data/*
+!data/bad_orders.csv

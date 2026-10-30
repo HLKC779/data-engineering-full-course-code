@@ -1,0 +1,37 @@
+PySpark for Data Engineering - how to run the course code
+==========================================================
+Tested with: OpenJDK 21, Python 3.13.5, pyspark 3.5.9. Linux/macOS, or WSL on Windows.
+Run every command from this folder, in a bash terminal. Everything runs locally.
+
+1) Setup (ch 2)
+   java -version
+   python3 -m venv .venv && source .venv/bin/activate
+   pip install pyspark==3.5.9
+   python hello_spark.py
+   (if Spark complains about the hostname: export SPARK_LOCAL_IP=127.0.0.1)
+
+2) First DataFrames and the course data (ch 3-4)
+   python dataframes.py
+   python make_data.py            (14 days of orders into data/raw; "python make_data.py 16" for 16 days)
+
+3) Reading, schemas, bad records (ch 5-6)
+   python read_files.py ; python read_typed.py ; python bad_records.py
+
+4) Transformations, aggregations, joins, windows, SQL, UDFs (ch 7-12)
+   python transform.py ; python aggregate.py ; python joins.py ; python windows.py ; python spark_sql.py ; python udfs.py
+
+5) Cleaning, the Parquet lake, plans and performance (ch 13-16)
+   python nulls_dupes.py ; python write_lake.py ; python read_lake.py ; python lazy.py ; python perf.py
+
+6) Incremental loads (ch 17)
+   python incremental.py          (run it again: "nothing to do")
+   python make_data.py 16 && python incremental.py
+
+7) Data quality (ch 18)
+   python quality.py data/lake/orders_current     (passes)
+   python quality.py data/raw/orders ; echo $?    (fails, exit code 1)
+
+8) Final project (ch 19-20)
+   python etl.py ; python explore_star.py
+   bash run_pipeline.sh           (safe to re-run; "bash run_pipeline.sh 17" adds a day)
+   cat report.md
